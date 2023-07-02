@@ -10,4 +10,8 @@ type Action interface {
 	CreateOK()
 	UpdateOK()
 	DeleteOK()
+	SuccessWithMessage(message string, data interface{})
+	CreateOkWithMessage(message string)
+	UpdateOkWithMessage(message string)
+	DeleteOkWithMessage(message string)
 }

@@ -32,12 +32,6 @@ func (g *GinActionImpl) ThrowError(err *ErrorModel) {
 	))
 }
 
-// Success 成功
-func (g *GinActionImpl) Success(data interface{}) {
-	g.res = NewResponse(SUCCESS, Succeed, data)
-	g.returnJsonWithStatusOK()
-}
-
 // Error 失败
 func (g *GinActionImpl) Error(err interface{}) {
 	g.res = NewResponse(ERROR, "", nil)
@@ -69,6 +63,12 @@ func (g *GinActionImpl) ThrowValidateError(err error) {
 
 }
 
+// Success 成功
+func (g *GinActionImpl) Success(data interface{}) {
+	g.res = NewResponse(SUCCESS, Succeed, data)
+	g.returnJsonWithStatusOK()
+}
+
 // CreateOK 创建成功
 func (g *GinActionImpl) CreateOK() {
 	g.res = NewResponse(SUCCESS, CreateSuccess, nil)
@@ -84,6 +84,30 @@ func (g *GinActionImpl) UpdateOK() {
 // DeleteOK 删除成功
 func (g *GinActionImpl) DeleteOK() {
 	g.res = NewResponse(SUCCESS, DeleteSuccess, nil)
+	g.returnJsonWithStatusOK()
+}
+
+// SuccessWithMessage 成功并返回消息
+func (g *GinActionImpl) SuccessWithMessage(message string, data interface{}) {
+	g.res = NewResponse(SUCCESS, message, data)
+	g.returnJsonWithStatusOK()
+}
+
+// CreateOkWithMessage 创建成功并返回消息
+func (g *GinActionImpl) CreateOkWithMessage(message string) {
+	g.res = NewResponse(SUCCESS, message, nil)
+	g.returnJsonWithStatusOK()
+}
+
+// UpdateOkWithMessage 更新成功并返回消息
+func (g *GinActionImpl) UpdateOkWithMessage(message string) {
+	g.res = NewResponse(SUCCESS, message, nil)
+	g.returnJsonWithStatusOK()
+}
+
+// DeleteOkWithMessage 删除成功并返回消息
+func (g *GinActionImpl) DeleteOkWithMessage(message string) {
+	g.res = NewResponse(SUCCESS, message, nil)
 	g.returnJsonWithStatusOK()
 }
 
