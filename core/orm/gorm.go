@@ -68,7 +68,7 @@ func (u *Util[T]) CreateOne(model *T) error {
 }
 
 // CreateMany 创建多条记录
-func (u *Util[T]) CreateMany(model *[]T) error {
+func (u *Util[T]) CreateMany(model []T) error {
 	return u.DB.Model(u.Model).Create(model).Error
 }
 
@@ -84,7 +84,7 @@ func (u *Util[T]) UpdateOneColumn(model *T, column ...string) error {
 }
 
 // UpdateMany 更新多条记录
-func (u *Util[T]) UpdateMany(model *[]T) error {
+func (u *Util[T]) UpdateMany(model []T) error {
 	return u.DB.Model(model).Updates(model).Error
 }
 
@@ -94,7 +94,7 @@ func (u *Util[T]) DeleteOne(model *T) error {
 }
 
 // DeleteMany 删除多条记录
-func (u *Util[T]) DeleteMany(model *[]T) error {
+func (u *Util[T]) DeleteMany(model []T) error {
 	return u.DB.Model(u.Model).Delete(model).Error
 }
 
