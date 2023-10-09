@@ -1,7 +1,9 @@
 package web
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"net/http"
 	"reflect"
 )
@@ -125,10 +127,86 @@ func (g *GinActionImpl) BindParam(param interface{}) error {
 	}
 	//	 绑定参数
 	err := g.c.ShouldBind(param)
+	fmt.Println(err)
 	if err != nil {
 		return g.req.GetValidateErr(err, param)
 	}
 
+	return nil
+}
+
+// BindUriParam 绑定uri参数
+func (g *GinActionImpl) BindUriParam(param interface{}) error {
+	//	 判断入参是否为指针是否为空
+	if param == nil {
+		panic("绑定参数不能为空")
+	}
+	//	 是否是指针
+	if reflect.TypeOf(param).Kind() != reflect.Ptr {
+		panic("绑定参数必须为指针")
+	}
+	//	 绑定参数
+	err := g.c.ShouldBindUri(param)
+	if err != nil {
+		return g.req.GetValidateErr(err, param)
+	}
+
+	return nil
+}
+
+// ShouldBindBodyWith 绑定body参数
+func (g *GinActionImpl) ShouldBindBodyWith(param any, bb binding.BindingBody) error {
+	//	 判断入参是否为指针是否为空
+	if param == nil {
+		panic("绑定参数不能为空")
+	}
+	//	 是否是指针
+	if reflect.TypeOf(param).Kind() != reflect.Ptr {
+		panic("绑定参数必须为指针")
+	}
+	//	 绑定参数
+	err := g.c.ShouldBindBodyWith(param, bb)
+	if err != nil {
+		return g.req.GetValidateErr(err, param)
+	}
+	return nil
+}
+
+// ShouldBindWith 绑定参数
+func (g *GinActionImpl) ShouldBindWith(param any, bb binding.Binding) error {
+	//	 判断入参是否为指针是否为空
+	if param == nil {
+		panic("绑定参数不能为空")
+	}
+	//	 是否是指针
+	if reflect.TypeOf(param).Kind() != reflect.Ptr {
+		panic("绑定参数必须为指针")
+	}
+	//	 绑定参数
+	err := g.c.ShouldBindWith(param, bb)
+	if err != nil {
+		return g.req.GetValidateErr(err, param)
+	}
+	return nil
+}
+
+// Bind 绑定参数 此方法需要传入多个gin的绑定方法
+// 如果是绑定uri参数需要传入c.ShouldBindUri 需要将uri参数放在最后 否则会报错 结构体中的uri参数需要加上tag binding:"omitempty" 否则 c.ShouldBindUri 之前的绑定方法会报错
+func (g *GinActionImpl) Bind(param any, opts ...BindOption) error {
+	//	 判断入参是否为指针是否为空
+	if param == nil {
+		panic("绑定参数不能为空")
+	}
+	//	 是否是指针
+	if reflect.TypeOf(param).Kind() != reflect.Ptr {
+		panic("绑定参数必须为指针")
+	}
+	//	 绑定参数
+	for _, opt := range opts {
+		if err := opt(param); err != nil {
+			return g.req.GetValidateErr(err, param)
+		}
+	}
 	return nil
 }
 
