@@ -35,7 +35,7 @@ func (g *GinActionImpl) ThrowError(err *ErrorModel) {
 }
 
 // Error 失败
-func (g *GinActionImpl) Error(err interface{}) {
+func (g *GinActionImpl) Error(err any) {
 	g.res = NewResponse(ERROR, "", nil)
 	// 判断err 类型
 	switch err.(type) {
@@ -66,7 +66,7 @@ func (g *GinActionImpl) ThrowValidateError(err error) {
 }
 
 // Success 成功
-func (g *GinActionImpl) Success(data interface{}) {
+func (g *GinActionImpl) Success(data any) {
 	g.res = NewResponse(SUCCESS, Succeed, data)
 	g.returnJsonWithStatusOK()
 }
