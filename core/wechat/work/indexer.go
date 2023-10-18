@@ -91,7 +91,7 @@ func NewClient(o ...Options) *Client {
 	if c.CachePrefix == "" {
 		panic("cache_prefix 缓存前缀必填")
 	}
-	c.CachePrefix = fmt.Sprintf("%s%s", constants.WorkCacheKeyPrefix, c.CachePrefix)
+	c.CachePrefix = fmt.Sprintf("%s%s:", constants.WorkCacheKeyPrefix, c.CachePrefix)
 	if c.HttpClient == nil {
 		c.HttpClient = NewHttpClient()
 	}

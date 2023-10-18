@@ -227,7 +227,7 @@ func NewClient(o ...Options) *Client {
 		opt(c)
 	}
 	// 设置缓存前缀
-	c.CachePrefix = fmt.Sprintf("%s%s", constants.MiniProgramCacheKeyPrefix, c.CachePrefix)
+	c.CachePrefix = fmt.Sprintf("%s%s:", constants.MiniProgramCacheKeyPrefix, c.CachePrefix)
 	if c.HttpClient == nil {
 		c.HttpClient = NewHttpClient()
 	}
