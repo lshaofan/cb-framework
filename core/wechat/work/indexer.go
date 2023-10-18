@@ -1,9 +1,10 @@
-package miniprogram
+package work
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"github.com/lshaofan/cb-framework/core/wechat/constants"
 	"github.com/lshaofan/cb-framework/core/wechat/interfaces"
 	"github.com/lshaofan/cb-framework/core/wechat/response"
@@ -39,31 +40,62 @@ func WithAccessToken(accessToken string) Options {
 	}
 }
 
+// WithCachePrefix 设置缓存前缀，必填
 func WithCachePrefix(prefix string) Options {
 	return func(c *Client) {
 		c.CachePrefix = prefix
 	}
 }
 
-func WithAppidAndSecret(appId string, appSecret string) Options {
-	if appId == "" || appSecret == "" {
+func WithAppidAndSecret(CorpID string, CorpSecret string) Options {
+	// 判断appid和app_secret是否为空
+	if CorpID == "" || CorpSecret == "" {
 		panic("appid or app_secret is nil")
 	}
+
 	return func(c *Client) {
-		c.AppId = appId
-		c.AppSecret = appSecret
+		c.CorpID = CorpID
+		c.CorpSecret = CorpSecret
 	}
 }
 
+type AccessTokenType string
+
+const (
+	// ContactAccessTokenType 通讯录
+	ContactAccessTokenType AccessTokenType = "contact_secret"
+	// ExternalContactAccessTokenType 外部联系人
+	ExternalContactAccessTokenType AccessTokenType = "external_contact_secret"
+)
+
 type Client struct {
-	HttpClient        interfaces.HttpClient
-	Store             interfaces.Store
-	AppId             string `json:"app_id" yaml:"app_id"`
-	AppSecret         string `json:"app_secret" yaml:"app_secret"`
+	ctx               *gin.Context
+	CorpID            string `json:"corp_id"`
+	CorpSecret        string `json:"corp_secret"`
 	CachePrefix       string `json:"cache_prefix" yaml:"cache_prefix"`
 	AccessToken       string `json:"access_token" yaml:"access_token"`
 	AccessTokenLock   *sync.Mutex
 	refreshTokenCount int
+	HttpClient        interfaces.HttpClient
+	Store             interfaces.Store
+}
+
+func NewClient(o ...Options) *Client {
+	c := &Client{
+		AccessTokenLock: new(sync.Mutex),
+	}
+	for _, opt := range o {
+		opt(c)
+	}
+	// 设置缓存前缀
+	if c.CachePrefix == "" {
+		panic("cache_prefix 缓存前缀必填")
+	}
+	c.CachePrefix = fmt.Sprintf("%s%s", constants.WorkCacheKeyPrefix, c.CachePrefix)
+	if c.HttpClient == nil {
+		c.HttpClient = NewHttpClient()
+	}
+	return c
 }
 
 // HasQuery 判断url中是否有参数
@@ -219,21 +251,6 @@ Request:
 	return resp, err
 }
 
-func NewClient(o ...Options) *Client {
-	c := &Client{
-		AccessTokenLock: new(sync.Mutex),
-	}
-	for _, opt := range o {
-		opt(c)
-	}
-	// 设置缓存前缀
-	c.CachePrefix = fmt.Sprintf("%s%s", constants.MiniProgramCacheKeyPrefix, c.CachePrefix)
-	if c.HttpClient == nil {
-		c.HttpClient = NewHttpClient()
-	}
-	return c
-}
-
 // 处理server响应的方法
 func (c *Client) handleResp(ret []byte, obj interface{}, apiName string) error {
 	err := json.Unmarshal(ret, obj)
@@ -245,12 +262,12 @@ func (c *Client) handleResp(ret []byte, obj interface{}, apiName string) error {
 	if !responseObj.IsValid() {
 		return StructNotHasCommonError
 	}
-	commonError := responseObj.Elem().FieldByName("CommonError")
-	if !commonError.IsValid() || commonError.Kind() != reflect.Struct {
-		return StructNotHasCommonError
-	}
-	errCode := commonError.FieldByName("ErrCode")
-	errMsg := commonError.FieldByName("ErrMsg")
+	//commonError := responseObj.Elem().FieldByName("CommonError")
+	//if !commonError.IsValid() || commonError.Kind() != reflect.Struct {
+	//	return StructNotHasCommonError
+	//}
+	errCode := responseObj.Elem().FieldByName("ErrCode")
+	errMsg := responseObj.Elem().FieldByName("ErrMsg")
 	if !errCode.IsValid() || !errMsg.IsValid() {
 		return StructNotHasCommonError
 	}
@@ -277,7 +294,7 @@ func (c *Client) GetAccessToken() (string, error) {
 		return c.AccessToken, nil
 	}
 	// 从缓存中获取
-	accessToken, err := c.Store.GetAccessToken(fmt.Sprintf("%s%s", c.GetCachePrefix(), c.AppId))
+	accessToken, err := c.Store.GetAccessToken(fmt.Sprintf("%s%s", c.GetCachePrefix(), c.CorpID))
 	if err != nil && err != redis.Nil {
 		return "", err
 	}
@@ -292,7 +309,7 @@ func (c *Client) GetAccessToken() (string, error) {
 		}
 
 		// 设置cache
-		err = c.Store.SetAccessToken(fmt.Sprintf("%s%s", c.GetCachePrefix(), c.AppId), ac.AccessToken, ac.ExpiresIn-1500)
+		err = c.Store.SetAccessToken(fmt.Sprintf("%s%s", c.GetCachePrefix(), c.CorpID), ac.AccessToken, ac.ExpiresIn-1500)
 		if err != nil {
 			return "", err
 		}
@@ -314,7 +331,7 @@ func (c *Client) RefreshAccessToken() (string, error) {
 	}
 
 	// 设置cache
-	err = c.Store.SetAccessToken(fmt.Sprintf("%s%s", c.GetCachePrefix(), c.AppId), ac.AccessToken, ac.ExpiresIn-1500)
+	err = c.Store.SetAccessToken(fmt.Sprintf("%s%s", c.GetCachePrefix(), c.CorpID), ac.AccessToken, ac.ExpiresIn-1500)
 	if err != nil {
 		return "", err
 	}
@@ -333,15 +350,15 @@ func (c *Client) getAccessTokenFromServer() (*GetAccessTokenResult, error) {
 	ret := new(GetAccessTokenResult)
 
 	res, err := c.HttpClient.Get(fmt.Sprintf(
-		constants.MiniProgramAccessTokenURL,
-		c.AppId,
-		c.AppSecret,
+		constants.WorkAccessTokenURL,
+		c.CorpID,
+		c.CorpSecret,
 	))
 
 	if err != nil {
 		return nil, err
 	}
-	err = c.handleResp(res, ret, constants.MiniProgramAccessTokenURL)
+	err = c.handleResp(res, ret, constants.WorkAccessTokenURL)
 	if err != nil {
 		return nil, err
 	}
@@ -356,21 +373,21 @@ type Code2SessionResult struct {
 	UnionId    string `json:"unionid"`
 }
 
-// Code2Session 登陆凭证校验的结果
-func (c *Client) Code2Session(code string) (*Code2SessionResult, error) {
-	ret := new(Code2SessionResult)
-	res, err := c.HttpClient.Get(fmt.Sprintf(
-		constants.MiniProgramCode2SessionURL,
-		c.AppId,
-		c.AppSecret,
-		code,
-	))
-	if err != nil {
-		return nil, err
-	}
-	err = c.handleResp(res, ret, constants.MiniProgramCode2SessionURL)
-	if err != nil {
-		return nil, err
-	}
-	return ret, nil
-}
+//// Code2Session 登陆凭证校验的结果
+//func (c *Client) Code2Session(code string) (*Code2SessionResult, error) {
+//	ret := new(Code2SessionResult)
+//	res, err := c.HttpClient.Get(fmt.Sprintf(
+//		constantsCode2SessionURL,
+//		c.AppId,
+//		c.AppSecret,
+//		code,
+//	))
+//	if err != nil {
+//		return nil, err
+//	}
+//	err = c.handleResp(res, ret, Code2SessionURL)
+//	if err != nil {
+//		return nil, err
+//	}
+//	return ret, nil
+//}
