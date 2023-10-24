@@ -340,7 +340,8 @@ func (c *Client) RefreshAccessToken() (string, error) {
 
 // GetAccessTokenResult 获取access_token结果
 type GetAccessTokenResult struct {
-	response.CommonError
+	ErrCode     int    `json:"errcode"`
+	ErrMsg      string `json:"errmsg"`
 	AccessToken string `json:"access_token"`
 	ExpiresIn   int64  `json:"expires_in"`
 }
@@ -364,30 +365,3 @@ func (c *Client) getAccessTokenFromServer() (*GetAccessTokenResult, error) {
 	}
 	return ret, nil
 }
-
-// Code2SessionResult 获取用户的openid和session_key 的结果
-type Code2SessionResult struct {
-	response.CommonError
-	OpenId     string `json:"openid"`
-	SessionKey string `json:"session_key"`
-	UnionId    string `json:"unionid"`
-}
-
-//// Code2Session 登陆凭证校验的结果
-//func (c *Client) Code2Session(code string) (*Code2SessionResult, error) {
-//	ret := new(Code2SessionResult)
-//	res, err := c.HttpClient.Get(fmt.Sprintf(
-//		constantsCode2SessionURL,
-//		c.AppId,
-//		c.AppSecret,
-//		code,
-//	))
-//	if err != nil {
-//		return nil, err
-//	}
-//	err = c.handleResp(res, ret, Code2SessionURL)
-//	if err != nil {
-//		return nil, err
-//	}
-//	return ret, nil
-//}

@@ -4,6 +4,8 @@ package constants
 const (
 	// WorkAccessTokenURL 获取access_token的url
 	WorkAccessTokenURL = "https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=%s&corpsecret=%s"
+	// WorkJsapiTicketURL 获取企业的jsapi_ticket
+	WorkJsapiTicketURL = "https://qyapi.weixin.qq.com/cgi-bin/get_jsapi_ticket"
 )
 
 // MiniProgram 小程序

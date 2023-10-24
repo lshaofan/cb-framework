@@ -11,6 +11,16 @@ type RedisStore struct {
 	ctx    context.Context
 }
 
+func (r *RedisStore) GetJsapiTicket(key string) (string, error) {
+	return r.Client.Get(r.ctx, key).Result()
+}
+
+func (r *RedisStore) SetJsapiTicket(key string, jsapiTicket string, expires int64) error {
+	return r.Client.Set(r.ctx, key, jsapiTicket,
+		time.Duration(expires)*time.Second,
+	).Err()
+}
+
 func (r *RedisStore) SetAccessToken(key string, accessToken string, expires int64) error {
 	return r.Client.Set(r.ctx, key, accessToken,
 		time.Duration(expires)*time.Second,
