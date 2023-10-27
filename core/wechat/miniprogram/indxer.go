@@ -245,12 +245,8 @@ func (c *Client) handleResp(ret []byte, obj interface{}, apiName string) error {
 	if !responseObj.IsValid() {
 		return StructNotHasCommonError
 	}
-	commonError := responseObj.Elem().FieldByName("CommonError")
-	if !commonError.IsValid() || commonError.Kind() != reflect.Struct {
-		return StructNotHasCommonError
-	}
-	errCode := commonError.FieldByName("ErrCode")
-	errMsg := commonError.FieldByName("ErrMsg")
+	errCode := responseObj.Elem().FieldByName("ErrCode")
+	errMsg := responseObj.Elem().FieldByName("ErrMsg")
 	if !errCode.IsValid() || !errMsg.IsValid() {
 		return StructNotHasCommonError
 	}

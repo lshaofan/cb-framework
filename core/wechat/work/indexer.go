@@ -59,6 +59,13 @@ func WithAppidAndSecret(CorpID string, CorpSecret string) Options {
 	}
 }
 
+// WithDebug 是否开启debug模式
+func WithDebug(debug bool) Options {
+	return func(c *Client) {
+		c.Debug = debug
+	}
+}
+
 type AccessTokenType string
 
 const (
@@ -78,6 +85,7 @@ type Client struct {
 	refreshTokenCount int
 	HttpClient        interfaces.HttpClient
 	Store             interfaces.Store
+	Debug             bool
 }
 
 func NewClient(o ...Options) *Client {
@@ -93,7 +101,9 @@ func NewClient(o ...Options) *Client {
 	}
 	c.CachePrefix = fmt.Sprintf("%s%s:", constants.WorkCacheKeyPrefix, c.CachePrefix)
 	if c.HttpClient == nil {
-		c.HttpClient = NewHttpClient()
+		c.HttpClient = NewHttpClient(
+			WithHttpClientDebug(c.Debug),
+		)
 	}
 	return c
 }
@@ -120,6 +130,7 @@ Request:
 	if err != nil {
 		return nil, err
 	}
+
 	// 没有传入obj则直接返回
 	if obj == nil {
 		return resp, nil

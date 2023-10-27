@@ -25,8 +25,15 @@ func WithHttpClientCtx(c context.Context) HttpCliOptions {
 	}
 }
 
+func WithHttpClientDebug(debug bool) HttpCliOptions {
+	return func(client *HttpClient) {
+		client.debug = debug
+	}
+}
+
 type HttpClient struct {
-	ctx context.Context
+	ctx   context.Context
+	debug bool
 }
 
 func (h *HttpClient) PostJSON(uri string, params interface{}) ([]byte, error) {
@@ -88,6 +95,11 @@ func (h *HttpClient) Post(uri string, data []byte, header map[string]string) ([]
 }
 
 func (h *HttpClient) Get(uri string) ([]byte, error) {
+	// debug
+	// debug
+	if h.debug {
+		fmt.Println("get请求的url:", uri)
+	}
 	request, err := http.NewRequestWithContext(h.ctx, http.MethodGet, uri, nil)
 	if err != nil {
 		return nil, err
@@ -111,7 +123,12 @@ func (h *HttpClient) Get(uri string) ([]byte, error) {
 			res.StatusCode,
 		)
 	}
-	return io.ReadAll(res.Body)
+	resp, err := io.ReadAll(res.Body)
+	// debug
+	if h.debug {
+		fmt.Println("get请求的resp:", string(resp))
+	}
+	return resp, err
 }
 
 func NewHttpClient(opts ...HttpCliOptions) *HttpClient {
