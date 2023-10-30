@@ -1,6 +1,7 @@
 package web
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/locales/zh"
 	ut "github.com/go-playground/universal-translator"
@@ -57,12 +58,13 @@ func (r *Request) GetValidateErr(err error, obj interface{}) *ErrorModel {
 	v := NewValidate()
 	getObj := reflect.TypeOf(obj)
 	var result *ErrorModel
+	var errs validator.ValidationErrors
 	// 判断err 是否是 validator.ValidationErrors 类型
-	if _, ok := err.(validator.ValidationErrors); !ok {
+	if !errors.As(err, &errs) {
 		result = NewErrorModel(ERROR, err.Error(), nil, http.StatusPreconditionFailed)
 	} else {
-		errors := err.(validator.ValidationErrors)
-		for _, err := range errors {
+
+		for _, err := range errs {
 			if f, exist := getObj.Elem().FieldByName(err.Field()); exist {
 				var tag string
 				for _, tagValueStr := range r.validateTags {
@@ -78,7 +80,6 @@ func (r *Request) GetValidateErr(err error, obj interface{}) *ErrorModel {
 					nil,
 					http.StatusPreconditionFailed,
 				)
-
 			} else {
 				result = NewErrorModel(
 					ERROR,
@@ -89,6 +90,7 @@ func (r *Request) GetValidateErr(err error, obj interface{}) *ErrorModel {
 			}
 			return result
 		}
+
 	}
 	return result
 }
