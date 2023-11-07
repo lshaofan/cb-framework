@@ -1,7 +1,7 @@
 package web
 
 import (
-	"fmt"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"net/http"
@@ -57,10 +57,11 @@ func (g *GinActionImpl) Error(err any) {
 // ThrowValidateError 参数验证错误抛出异常
 func (g *GinActionImpl) ThrowValidateError(err error) {
 	//	判断是否为ErrorModel
-	if errModel, ok := err.(*ErrorModel); ok {
+	var errModel *ErrorModel
+	if errors.As(err, &errModel) {
 		g.ThrowError(errModel)
 	} else {
-		g.Error(err.Error())
+		g.Error(err)
 	}
 
 }
@@ -127,11 +128,9 @@ func (g *GinActionImpl) BindParam(param interface{}) error {
 	}
 	//	 绑定参数
 	err := g.c.ShouldBind(param)
-	fmt.Println(err)
 	if err != nil {
 		return g.req.GetValidateErr(err, param)
 	}
-
 	return nil
 }
 
