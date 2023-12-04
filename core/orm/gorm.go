@@ -110,9 +110,9 @@ func (u *Util[T]) GetDB() *gorm.DB {
 
 // PageRequest 分页请求的参数
 type PageRequest struct {
-	Page     int                    // 页码
-	PageSize int                    // 每页数量
-	Total    int64                  // total 总数
+	Page     int                    `json:"page"`
+	PageSize int                    `json:"page_size"`
+	Total    int64                  `json:"total"`
 	Where    map[string]interface{} // 条件and 自行拼接
 	OrWhere  map[string]interface{} // 条件or 自行拼接
 	asc      string                 // 正序排序
