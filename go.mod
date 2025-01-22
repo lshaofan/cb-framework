@@ -1,6 +1,6 @@
 module github.com/lshaofan/cb-framework
 
-go 1.20
+go 1.22.7
 
 require (
 	github.com/gin-gonic/gin v1.9.1

@@ -15,7 +15,17 @@ type Logger struct {
 }
 
 func NewLogger(args interface{}) *Logger {
-	return &Logger{logger: logger.New(args)}
+	l := logrus.New()
+	l.SetLevel(logrus.InfoLevel)
+	writer, err := logger.GetOutput("http", "exception")
+	if err != nil {
+		panic(err)
+	}
+	l.SetOutput(writer)
+	l.SetFormatter(&logrus.JSONFormatter{
+		TimestampFormat: "2006-01-02 15:04:05",
+	})
+	return &Logger{logger: l}
 }
 
 // AddErrorLog 添加错误日志
